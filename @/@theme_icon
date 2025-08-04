@@ -1,0 +1,9 @@
+#!/bin/bash
+
+MODE=$(cat "$HOME/.theme_mode" 2>/dev/null || echo "night")
+
+if [[ "$MODE" == "day" ]]; then
+    echo "🌞️"
+else
+    echo "🌝"
+fi

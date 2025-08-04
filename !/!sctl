@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Access systemctl for faster/easier navigation
+# Provide views via first arg $1 and matching filename or smt
+# How to handle systemctl --user? maybe if $# == 2, check if $1==--user and then take $2 as view
+
+#!/bin/bash
+
+# Require gum
+command -v gum >/dev/null 2>&1 || {
+	echo "This script requires 'gum' from Charmbracelet." >&2
+	exit 1
+}
+
+# Handle optional arguments
+MODE=""
+QUERY=""
+
+if [[ "$1" == "--user" ]]; then
+	MODE="--user"
+	shift
+fi
+
+if [[ "$1" == "--help" ]]; then
+	echo "Usage: $0 [--user] [initial search string]"
+	echo "       --user: List user units instead of system units"
+	exit 0
+fi
+
+if [[ -n "$1" ]]; then
+	QUERY="$1"
+fi
+
+# Fetch unit list
+units=$(systemctl $MODE list-unit-files --type=service --no-pager --no-legend | awk '{print $1}')
+
+# Check if units were fetched
+if [[ -z "$units" ]]; then
+	echo "No units found."
+	exit 1
+fi
+
+while true; do
+	# Fuzzy filter with optional initial value
+	selected_unit=$(echo "$units" | gum filter --placeholder "Select a unit..." --value "$QUERY")
+
+	# If nothing selected, exit
+	if [[ -z "$selected_unit" ]]; then
+		echo "No unit selected."
+		exit 0
+	fi
+
+	# Show status of selected unit
+	clear
+	!sctl-unit $MODE "$selected_unit"
+	code=$?
+
+	if [[ $code -eq 42 ]]; then
+		clear
+		continue # Go back to filter
+	else
+		exit 0
+	fi
+done

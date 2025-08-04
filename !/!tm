@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Get list of existing tmux sessions (names only)
+sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null || true)
+
+# If there are existing sessions, list them with gum choose
+if [ -n "$sessions" ]; then
+  selected=$(echo "$sessions" | gum choose --header="Choose an existing session or press ESC to type a new one")
+else
+  selected=""
+fi
+
+# If nothing selected (user pressed ESC or no sessions), ask for a new session name
+if [ -z "$selected" ]; then
+  selected=$(gum input --prompt "New tmux session name: ")
+fi
+
+# Exit if still empty
+if [ -z "$selected" ]; then
+  echo "No session selected or created."
+  exit 1
+fi
+
+# Check if session already exists
+if echo "$sessions" | grep -Fxq "$selected"; then
+  echo "Attaching to existing session: $selected"
+  !notify "tmux" "Joined $selected"
+  tmux attach-session -t "$selected"
+else
+  echo "Creating and attaching to new session: $selected"
+  !notify "tmux" "Created $selected"
+  tmux new-session -s "$selected"
+fi

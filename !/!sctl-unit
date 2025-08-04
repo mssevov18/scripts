@@ -1,0 +1,150 @@
+#!/bin/bash
+
+MODE=""
+UNIT=""
+
+# === Parse arguments ===
+if [[ "$1" == "--user" ]]; then
+  MODE="--user"
+  UNIT="$2"
+else
+  UNIT="$1"
+fi
+
+if [[ -z "$UNIT" ]]; then
+  echo "Usage: sctl-unit.sh [--user] <unit name>"
+  exit 1
+fi
+
+# === Check gum ===
+command -v gum >/dev/null || {
+  echo "This script requires 'gum' from Charmbracelet." >&2
+  exit 1
+}
+
+# === Helper: Status Summary ===
+print_status_summary() {
+  ACTIVE=$(systemctl $MODE is-active "$UNIT")
+  ENABLED=$(systemctl $MODE is-enabled "$UNIT" 2>/dev/null)
+  PID=$(systemctl $MODE show -p MainPID --value "$UNIT")
+  FRAGMENT_PATH=$(systemctl $MODE show -p FragmentPath --value "$UNIT")
+
+  case "$ACTIVE" in
+  active)
+    STATUS_ICON="🟢"
+    COLOR=42
+    ;;
+  inactive)
+    STATUS_ICON="🔴"
+    COLOR=196
+    ;;
+  failed)
+    STATUS_ICON="⚠️"
+    COLOR=208
+    ;;
+  activating)
+    STATUS_ICON="⏳"
+    COLOR=220
+    ;;
+  deactivating)
+    STATUS_ICON="🔄"
+    COLOR=220
+    ;;
+  *)
+    STATUS_ICON="❔"
+    COLOR=250
+    ;;
+  esac
+
+  if [[ "$FRAGMENT_PATH" == *"/etc/systemd/user/"* || "$FRAGMENT_PATH" == *"/usr/lib/systemd/user/"* || "$FRAGMENT_PATH" == *".config/systemd/user"* ]]; then
+    TYPE_ICON="👤"
+    TYPE_LABEL="User"
+  elif [[ "$FRAGMENT_PATH" == *"/etc/systemd/system/"* || "$FRAGMENT_PATH" == *"/usr/lib/systemd/system/"* ]]; then
+    TYPE_ICON="🛠️"
+    TYPE_LABEL="System"
+  else
+    TYPE_ICON="❔"
+    TYPE_LABEL="Unknown"
+  fi
+
+  gum style \
+    --border rounded \
+    --padding "1 2" \
+    --margin "1 0" \
+    --foreground "$COLOR" \
+    " $UNIT $STATUS_ICON" \
+    " Active:  $ACTIVE" \
+    " Enabled: $ENABLED" \
+    " Main PID: ${PID:-N/A}" \
+    " Service Type: $TYPE_ICON  $TYPE_LABEL"
+}
+
+# === Main Loop ===
+while true; do
+  clear
+  print_status_summary
+
+  # Recompute current state
+  ACTIVE=$(systemctl $MODE is-active "$UNIT")
+  ENABLED=$(systemctl $MODE is-enabled "$UNIT" 2>/dev/null)
+
+  # Build smart action menu
+  ACTIONS=("View full status" "View logs (last 50)" "Tail logs live")
+
+  if [[ "$ACTIVE" == "active" ]]; then
+    ACTIONS+=("Stop" "Restart")
+  else
+    ACTIONS+=("Start")
+  fi
+
+  if [[ "$ENABLED" == "enabled" ]]; then
+    ACTIONS+=("Disable")
+  else
+    ACTIONS+=("Enable")
+  fi
+
+  ACTIONS+=("Back" "Exit")
+
+  # Choose action
+  ACTION=$(printf "%s\n" "${ACTIONS[@]}" | gum choose --height 10 --header "Choose an action for $UNIT")
+
+  case "$ACTION" in
+  Start)
+    sudo systemctl $MODE start "$UNIT" && gum confirm "Started. Back to menu?" && continue
+    ;;
+  Stop)
+    sudo systemctl $MODE stop "$UNIT" && gum confirm "Stopped. Back to menu?" && continue
+    ;;
+  Restart)
+    sudo systemctl $MODE restart "$UNIT" && gum confirm "Restarted. Back to menu?" && continue
+    ;;
+  Enable)
+    sudo systemctl $MODE enable "$UNIT" && gum confirm "Enabled. Back to menu?" && continue
+    ;;
+  Disable)
+    sudo systemctl $MODE disable "$UNIT" && gum confirm "Disabled. Back to menu?" && continue
+    ;;
+  "View full status")
+    clear
+    systemctl $MODE status "$UNIT"
+    gum confirm "Back to menu?" && continue
+    ;;
+  "View logs (last 50)")
+    clear
+    journalctl $MODE -u "$UNIT" -n 50 --no-pager | gum pager
+    ;;
+  "Tail logs live")
+    clear
+    echo "Press Ctrl+C to stop log tailing..."
+    sleep 0.5
+    journalctl $MODE -u "$UNIT" -f
+    ;;
+  Back)
+    exit 42
+    ;;
+  Exit | *)
+    echo "Goodbye."
+    exit 0
+    ;;
+  esac
+done

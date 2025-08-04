@@ -1,0 +1,15 @@
+#Emacs - GUI
+# Check if Emacs server is running before trying to reload theme
+if emacsclient -s gui -e nil &>/dev/null; then
+	emacsclient -s gui -e "(my/load-theme-based-on-mode)" >/dev/null &
+else
+	echo "(gui) Emacs server not running. Skipping theme reload."
+fi
+
+#Emacs - TTY
+# Check if Emacs server is running before trying to reload theme
+if emacsclient -s tty -e nil &>/dev/null; then
+	emacsclient -s tty -e "(my/load-theme-based-on-mode)" >/dev/null &
+else
+	echo "(gui) Emacs server not running. Skipping theme reload."
+fi

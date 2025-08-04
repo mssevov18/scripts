@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Usage:
+#   !notify "Title" [icon] [body]
+
+TITLE="$1"
+BODY="$2"
+ICON="${3:-dialog-information}"
+
+# 🔍 Show help if title looks like a help flag
+if [[ "$TITLE" == "help" || "$TITLE" == "-h" || "$TITLE" == "--help" ]]; then
+  echo "Usage: !notify TITLE [BODY] [ICON]"
+  echo
+  echo "Examples:"
+  echo "  !notify \"Build Complete\" \"Artifacts saved.\""
+  echo "  !notify \"✅ All done\""
+  echo "  !notify \"Failed\" \"Something went wrong\" dialog-error"
+  echo
+  echo "Backends:"
+  echo "  - notify-send (default if available)"
+  echo "  - dunstify (fallback)"
+  echo "  - terminal-notifier or osascript (macOS)"
+  echo "  - echo (if all else fails)"
+  exit 0
+fi
+
+if command -v notify-send >/dev/null; then
+	notify-send -i "$ICON" "$TITLE" "$BODY"
+	exit 0
+fi
+
+if command -v dunstify >/dev/null; then
+	dunstify -i "$ICON" "$TITLE" "$BODY"
+	exit 0
+fi
+
+if command -v terminal-notifier >/dev/null; then
+	terminal-notifier -title "$TITLE" -message "$BODY"
+	exit 0
+fi
+
+if command -v osascript >/dev/null; then
+	osascript -e "display notification \"$BODY\" with title \"$TITLE\""
+	exit 0
+fi
+
+# Fallback to terminal output
+if [[ -n "$BODY" ]]; then
+	echo "🔔 $TITLE: $BODY"
+else
+	echo "🔔 $TITLE"
+fi

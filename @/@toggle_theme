@@ -1,0 +1,12 @@
+#!/bin/bash
+
+THEME_FILE="$HOME/.theme_mode"
+MODE=$(cat "$THEME_FILE" 2>/dev/null || echo "night")
+
+if [[ "$MODE" == "day" ]]; then
+    "$HOME/scripts/@/@night"
+else
+    "$HOME/scripts/@/@day"
+fi
+
+~/scripts/@/@theme_change_hook

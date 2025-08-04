@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Subcommand mapping
+declare -A CMD_MAP=(
+  [status]="!git-status"
+  [add]="!git-add"
+  [commit]="!commit"
+)
+
+# If called with a subcommand, run it if in map
+if [[ -n "$1" ]]; then
+  CMD="${CMD_MAP[$1]}"
+  if [[ -n "$CMD" ]]; then
+    shift
+    exec "$CMD" "$@"
+  else
+    echo "❌ Unknown command: $1"
+    exit 1
+  fi
+fi
+
+# Otherwise, open interactive menu
+CHOICE=$(gum choose --header="Select a Git-related command:" "${!CMD_MAP[@]}")
+
+if [[ -n "$CHOICE" ]]; then
+  exec "${CMD_MAP[$CHOICE]}"
+else
+  echo "❎ Cancelled."
+  exit 0
+fi

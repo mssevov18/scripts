@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# 🔍 Check for staged changes
+check_staged() {
+	git diff --cached --quiet
+	return $?
+}
+
+# 🧪 Check if anything is staged
+check_staged
+if [[ $? -ne 1 ]]; then
+	if gum confirm "No staged changes found. Do you want to add files?" --default=true; then
+		!git-add
+		check_staged
+		if [[ $? -ne 1 ]]; then
+			echo "❎ Still nothing to commit."
+			!notify "❎ Nothing to Commit" "dialog-information" "You didn't stage any files."
+			exit 0
+		fi
+	else
+		echo "❎ Commit cancelled."
+		!notify "❎ Commit Cancelled" "dialog-warning" "No changes staged."
+		exit 0
+	fi
+fi
+
+# 🧠 Commit UI
+TYPE=$(gum choose --header="Commit Scope:" "patch" "feat" "fix" "docs" "style" "refactor" "test" "chore" "revert")
+SCOPE=$(gum input --placeholder "scope")
+SUMMARY=$(gum input --value "$TYPE-$SCOPE: " --placeholder "Summary of the changes")
+DESCRIPTION=$(gum write --placeholder "Details of the changes")
+
+# ✅ Confirm and commit
+if gum confirm "Commit changes?"; then
+	if git commit -m "$SUMMARY" -m "$DESCRIPTION"; then
+		printf "\n$SUMMARY\n$DESCRIPTION\n"
+		!notify "✅ Commit Successful" "dialog-information" "$SUMMARY"
+	else
+		printf "\n❌ Commit failed.\n"
+		!notify "❌ Commit Failed" "dialog-error" "$SUMMARY"
+	fi
+else
+	echo "❎ Commit cancelled."
+	!notify "❎ Commit Cancelled" "dialog-warning" ""
+fi

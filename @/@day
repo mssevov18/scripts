@@ -1,0 +1,10 @@
+#!/bin/bash
+# @day
+# Change configs, themes to light
+echo "day" >~/.theme_mode
+
+# Kitty
+ln -sf ~/.config/kitty/themes/gruvbox_light.conf ~/.config/kitty/themes/current-theme.conf
+pkill -USR1 kitty # Tells kitty to reload config
+
+~/scripts/@/@theme_change_hook

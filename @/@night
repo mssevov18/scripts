@@ -1,0 +1,10 @@
+#!/bin/bash
+# @night
+# Change configs, themes to night
+echo "night" >~/.theme_mode
+
+# Kitty
+ln -sf ~/.config/kitty/themes/gruvbox_dark.conf ~/.config/kitty/themes/current-theme.conf
+pkill -USR1 kitty # Tells kitty to reload config
+
+~/scripts/@/@theme_change_hook
