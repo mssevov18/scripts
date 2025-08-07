@@ -2,9 +2,9 @@
 
 # Subcommand mapping
 declare -A CMD_MAP=(
-  [status]="!git-status"
-  [add]="!git-add"
-  [commit]="!commit"
+  [status]="!git.status"
+  [add]="!git.add"
+  [commit]="!git.commit"
 )
 
 # If called with a subcommand, run it if in map

@@ -10,7 +10,7 @@ check_staged() {
 check_staged
 if [[ $? -ne 1 ]]; then
 	if gum confirm "No staged changes found. Do you want to add files?" --default=true; then
-		!git-add
+		!git.add
 		check_staged
 		if [[ $? -ne 1 ]]; then
 			echo "❎ Still nothing to commit."

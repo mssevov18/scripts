@@ -52,7 +52,7 @@ while true; do
 
 	# Show status of selected unit
 	clear
-	!sctl-unit $MODE "$selected_unit"
+	!sctl.unit $MODE "$selected_unit"
 	code=$?
 
 	if [[ $code -eq 42 ]]; then

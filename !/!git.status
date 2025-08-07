@@ -14,7 +14,7 @@ gum style --foreground 212 --border normal --margin "1 2" --padding "1 2" --bord
 
 # ➕ Prompt to add files
 if gum confirm "Do you want to add files?" --default=false; then
-	!git-add
+	!git.add
 	# ✅ Commit if confirmed
 	if gum confirm "Do you want to commit staged changes?" --default=true; then
 		!commit
