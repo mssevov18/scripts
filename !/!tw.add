@@ -1,54 +1,86 @@
 #!/usr/bin/env bash
 
 filter_pick() {
+	# Pick lines from line-delimited text
+	#
+	# Args:
+	#   $1 - raw_output (string)
+	#   $2 - allow_multiple ("true"/"false")
+	#   $3 - require_input ("true"/"false")
+
 	local raw_output="$1"
-	local allow_multiple="$2" # e.g. pass "true" to enable --no-limit
+	local allow_multiple="$2" # pass "true" to enable --no-limit
+	local require_input="$3"  # pass "true" to prompt if no choice
 	local list_len filtered trimmed choice
 
-	# Step 1: Run command and capture output
+	# Step 1: Count lines
 	list_len=$(wc -l <<<"$raw_output")
 
-	# Step 2: Extract middle part (remove first 3 and last 2 lines)
+	# Step 2: Remove header/footer (first 3, last 2)
 	filtered=$(sed -n "4,$((list_len - 2))p" <<<"$raw_output")
 
-	# Step 3: Extract first word of each line
+	# Step 3: Extract first word
 	trimmed=$(sed 's/^\([^[:space:]]*\).*/\1/' <<<"$filtered")
 
-	# Step 4: Use gum choose (with optional --no-limit)
+	# Step 4: Use gum choose
 	if [[ "$allow_multiple" == "true" ]]; then
 		choice=$(echo "$trimmed" | gum choose --no-limit)
 	else
 		choice=$(echo "$trimmed" | gum choose)
 	fi
 
-	# Step 5: If no choice made (empty), fall back to gum input
-	if [[ -z "$choice" ]]; then
+	# Step 5: If no choice and require_input=true, prompt manually
+	if [[ -z "$choice" && "$require_input" == "true" ]]; then
 		choice=$(gum input --placeholder "Enter value manually...")
 	fi
 
-	# Step 6: Return the result
+	# Step 6: Return
 	echo "$choice"
 }
 
-TEXT=$(gum input --placeholder "task title")
+if [ $# -gt 0 ]; then
+	TEXT="$*"
+else
+	while :; do
+		TEXT=$(gum input --placeholder "task title")
+		[ -n "$TEXT" ] && break
+		gum style --foreground 196 "Task title is required!"
+	done
+fi
 
 if gum confirm "Add to project?"; then
-	TEMP="$(task projects | sed '/(none)/d')"
-	PROJECT="project:$(filter_pick "$TEMP" false)"
+	TEMP="$(task projects)"
+	PICKED=$(filter_pick "$TEMP" false true)
+
+	if [ "$PICKED" = "(none)" ]; then
+		PROJECT=""
+		task project: summary
+	elif task _projects | grep -Fxq "$PICKED"; then
+		PROJECT="project:$PICKED"
+		task "$PROJECT" summary
+	else
+		echo "new project:$PICKED"
+	fi
+
 fi
 
 if gum confirm "Add tags?"; then
 	TEMP="$(task tags 2>/dev/null)"
-	TAGS=$(filter_pick "$TEMP" true | sed -E 's/([^[:space:]]+)/+\1/g')
-	if gum confirm "Add new tags?"; then
-		echo $TAGS
-		TAGS="$TAGS $(gum input)"
+	TAGS=$(
+		filter_pick "$TEMP" true false |
+			awk 'NF{ s=$0; sub(/^[[:space:]]+/, "", s); if (s ~ /^\+/) print s; else print "+" s }' |
+			paste -sd' ' -
+	)
+
+	# Only ask to add/edit if we already have some tags
+	if [ -n "$TAGS" ] && gum confirm "Add new tags?"; then
+		TAGS=$(gum input --value="$TAGS " --placeholder="enter tags (+tag-name +tag2)")
 	fi
 fi
 
 echo "$PROJECT" "$TAGS" "$TEXT"
 
-# PRESET=$(gum choose "Now" "Enter manually" "Pick step-by-step")
+# PRESET=$(gum choose "Now" "Enter manually")
 # if [[ "$PRESET" == "Now" ]]; then
 # 	DATETIME=$(date '+%Y-%m-%d %H:%M:%S')
 # elif [[ "$PRESET" == "Enter manually" ]]; then
