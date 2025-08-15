@@ -16,9 +16,9 @@ gum style --foreground 212 --border normal --margin "1 2" --padding "1 2" --bord
 if gum confirm "Do you want to add files?" --default=false; then
 	!git.add
 	# ✅ Commit if confirmed
-	if gum confirm "Do you want to commit staged changes?" --default=true; then
-		!git.commit
-	else
-		!notify "🚫 Commit Cancelled" "dialog-warning" "Changes remain unstaged or uncommitted."
-	fi
+	# if gum confirm "Do you want to commit staged changes?" --default=true; then
+	# 	!git.commit
+	# else
+	# 	!notify "🚫 Commit Cancelled" "dialog-warning" "Changes remain unstaged or uncommitted."
+	# fi
 fi
