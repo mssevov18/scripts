@@ -17,16 +17,8 @@ if gum confirm "Do you want to add files?" --default=false; then
 	!git.add
 	# ✅ Commit if confirmed
 	if gum confirm "Do you want to commit staged changes?" --default=true; then
-		!commit
+		!git.commit
 	else
 		!notify "🚫 Commit Cancelled" "dialog-warning" "Changes remain unstaged or uncommitted."
 	fi
 fi
-
-# 🔄 Recheck status
-# if git diff --cached --quiet; then
-# 	if ! gum confirm "No staged changes. Do you want to commit anyway?" --default=false; then
-# 		!notify "❎ Skipped Commit" "dialog-warning" "No files staged."
-# 		exit 0
-# 	fi
-# fi

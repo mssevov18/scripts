@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+if [[ -f ".info" ]]; then
+	gum style "$(cat "./.info")" --faint
+fi
