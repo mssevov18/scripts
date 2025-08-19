@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+cleanup_tags() {
+	local line_input="$1"
+	local cleaned=""
+	for word in $line_input; do
+		[[ $word == +* ]] && cleaned+="$word " || cleaned+="+$word "
+	done
+	echo "${cleaned% }"
+}
+
 filter_pick() {
 	# Pick lines from line-delimited text
 	#
@@ -66,19 +75,30 @@ fi
 
 if gum confirm "Add tags?"; then
 	TEMP="$(task tags 2>/dev/null)"
-	TAGS=$(
-		filter_pick "$TEMP" true false |
-			awk 'NF{ s=$0; sub(/^[[:space:]]+/, "", s); if (s ~ /^\+/) print s; else print "+" s }' |
-			paste -sd' ' -
-	)
+	TAGS=$(cleanup_tags "$(filter_pick "$TEMP" true false)")
+	# TAGS=$(
+	# 	filter_pick "$TEMP" true false |
+	# 		awk 'NF{ s=$0; sub(/^[[:space:]]+/, "", s); if (s ~ /^\+/) print s; else print "+" s }' |
+	# 		paste -sd' ' -
+	# )
 
 	# Only ask to add/edit if we already have some tags
-	if [ -n "$TAGS" ] && gum confirm "Add new tags?"; then
-		TAGS=$(gum input --value="$TAGS " --placeholder="enter tags (+tag-name +tag2)")
+	if gum confirm "Add new tags?"; then
+		TAGS=$(cleanup_tags "$(gum input --value="$TAGS " --placeholder="enter tags (+tag-name +tag2)")")
 	fi
 fi
 
-echo "$PROJECT" "$TAGS" "$TEXT"
+#####
+## Datetime entries
+#####
+# Started -
+# Ended -
+# Scheduled -
+# Due -
+# Until -
+# Recur -
+# Wait until -
+####
 
 # PRESET=$(gum choose "Now" "Enter manually")
 # if [[ "$PRESET" == "Now" ]]; then
@@ -86,3 +106,6 @@ echo "$PROJECT" "$TAGS" "$TEXT"
 # elif [[ "$PRESET" == "Enter manually" ]]; then
 # 	DATETIME=$(gum input --placeholder "YYYY-MM-DD HH:MM:SS" --value "$(date '+%Y-%m-%d %H:%M:%S')")
 # fi
+
+echo "$PROJECT" "$TAGS" "$TEXT"
+# task add "$PROJECT" "$TAGS" "$TEXT"
