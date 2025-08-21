@@ -4,7 +4,9 @@
 echo "day" >~/.theme_mode
 
 # Kitty
-ln -sf ~/.config/kitty/themes/gruvbox_light.conf ~/.config/kitty/themes/current-theme.conf
+ln -sf ~/themes/kitty/gruvbox_light.conf ~/.config/kitty/themes/current-theme.conf
 pkill -USR1 kitty # Tells kitty to reload config
+
+ln -sf ~/themes/taskwarrior/day-theme ~/themes/taskwarrior/current_theme
 
 ~/scripts/@/@theme_change_hook
