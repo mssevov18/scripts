@@ -11,5 +11,5 @@ fi
 if emacsclient -s tty -e nil &>/dev/null; then
 	emacsclient -s tty -e "(my/load-theme-based-on-mode)" >/dev/null &
 else
-	echo "(gui) Emacs server not running. Skipping theme reload."
+	echo "(tty) Emacs server not running. Skipping theme reload."
 fi

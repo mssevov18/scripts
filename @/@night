@@ -9,4 +9,8 @@ pkill -USR1 kitty # Tells kitty to reload config
 
 ln -sf ~/themes/taskwarrior/night-theme ~/themes/taskwarrior/current_theme
 
+# Fish theme -> Light
+ln -sf ~/themes/fish/ayu_dark.fish ~/themes/fish/current.fish
+fish -c 'source ~/themes/fish/current.fish'
+
 ~/scripts/@/@theme_change_hook
